@@ -15,14 +15,9 @@ def create_issue(title, body):
 
 with MailBox(os.environ["MAIL_SERVER"]).login(
         os.environ["MAIL_USER"], os.environ["MAIL_PASS"]) as mb:
-    # ne lit que les non-lus marqués ; les marque lus après traitement
-    for msg in mb.fetch(AND(seen=False, subject=MARK)):
-        m = re.search(r"---PLANNERDATA---\s*(\{.*?\})\s*---END---",
-                      msg.text or "", re.S)
-        if not m:
-            continue
-        data = json.loads(m.group(1))
-        url = create_issue(data["title"], data.get("body", "") +
-                            f"\n\n_Planner task: {data['taskId']}_")
-        print("Créée:", url)
-        mb.flag(msg.uid, ['\\Seen'], True)   # marque lu = traité
+    all_msgs = list(mb.fetch(AND(seen=False), limit=20))
+    print(f"Mails non-lus trouvés : {len(all_msgs)}")
+    for msg in all_msgs:
+        print("---")
+        print("SUBJECT:", repr(msg.subject))
+        print("BODY   :", repr((msg.text or "")[:300]))
